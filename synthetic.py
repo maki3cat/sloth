@@ -33,4 +33,4 @@ def accumulate_data():
 
 if __name__ == "__main__":
     print("Hello, World!")
-    generate_synthetic_data()
+    generate_synthetic_data(pipeline_instance_id=1991)

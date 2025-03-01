@@ -53,15 +53,16 @@ con = sqlite3.connect("pipeline.db")
 def create_tables():
     cur = con.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS tb_tasks (id integer primary key, pipeline_instance_id integer, name TEXT, parameters TEXT, status integer default 0)")
-    cur.execute("CREATE TABLE IF NOT EXISTS tb_pipelines (id integer primary key, name TEXT, version integer, status integer default 0)")
+    cur.execute("CREATE TABLE IF NOT EXISTS tb_pipelines (id integer primary key, name TEXT, version integer default 0, status integer default 0)")
     con.commit()
 
 def delete_tables():
     cur = con.cursor()
     cur.execute("DROP TABLE IF EXISTS tb_tasks")
-    cur.execute("DROP TABLE IF EXISTS tasks")
+    cur.execute("DROP TABLE IF EXISTS tb_pipelines")
     con.commit()
 
+delete_tables() # todo: remove this
 create_tables()
 
 def insert_task(task: TaskInstance)->int:
@@ -90,15 +91,17 @@ def insert_pipeline(pipeline: PipelineInstance)->int:
     con.commit()
     return id
 
-def query_history(pipeline_id: int)->InstanceHistory:
+def query_history(pipeline_instance_id: int)->InstanceHistory:
     cur = con.cursor()
-    cur.execute("SELECT * FROM tb_tasks WHERE pipeline_id=?", (pipeline_id,))
+    instance = cur.execute("SELECT id, name, version, status FROM tb_pipelines WHERE id=?", (pipeline_instance_id,)).fetchone()
+    if instance is None:
+        return None
+    cur.execute("SELECT * FROM tb_tasks WHERE pipeline_instance_id=?", (pipeline_instance_id,))
     rows = cur.fetchall()
     tasks = []
     for row in rows:
         task = TaskInstance(row[1], row[0], row[2])
         task.deserialize_parameters(row[3])
         tasks.append(task)
-    instance = cur.execute("SELECT id, name, version, status FROM tb_pipelines WHERE id=?", (pipeline_id,)).fetchone()
     history = InstanceHistory(tasks, instance)
     return history
