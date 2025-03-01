@@ -1,7 +1,7 @@
 """
 this is a pipeline to generate synthetic data
 """
-from pipeline import pipeline, task
+from sloth.pipeline import pipeline, task
 import uuid
 
 
@@ -13,7 +13,7 @@ LLM_urls = ["GPT", "CLAUD", "DEEPSEEK", "GROK"]
 def generate_synthetic_data(batch_id: str=None, count_per_LLM: int=10):
     if batch_id is None:
         batch_id = uuid.uuid4().hex
-    prompt = "some fixed url for symptom BPD"
+    # prompt = "some fixed url for symptom BPD"
     for url in LLM_urls:
         for i in range(count_per_LLM):
         # todo: should add worker of activity so that this will not blocking start task of 
@@ -21,6 +21,7 @@ def generate_synthetic_data(batch_id: str=None, count_per_LLM: int=10):
     # todo: wait for all the call to return
     # todo: tolerate stagger, and other failures
     accumulate_data()
+
 
 @task
 def call_LLM_and_save(batch_id: str, task_count: int, url: str)->str:
