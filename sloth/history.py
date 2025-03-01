@@ -44,43 +44,54 @@ class PipelineInstance:
 
 class InstanceHistory:
     def __init__(self, task_instances:list[TaskInstance], instance: PipelineInstance):
-        self.task_instances = task_instances
         self.pipeline_status = instance.status
         self.pipeline_version = instance.version
+        self.task_map = dict([(task.name, task) for task in task_instances])
 
 con = sqlite3.connect("pipeline.db")
-cur = con.cursor()
 
 def create_tables():
+    cur = con.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS tb_tasks (id integer primary key, pipeline_instance_id integer, name TEXT, parameters TEXT, status integer default 0)")
     cur.execute("CREATE TABLE IF NOT EXISTS tb_pipelines (id integer primary key, name TEXT, version integer, status integer default 0)")
     con.commit()
 
 def delete_tables():
+    cur = con.cursor()
     cur.execute("DROP TABLE IF EXISTS tb_tasks")
     cur.execute("DROP TABLE IF EXISTS tasks")
     con.commit()
 
 create_tables()
 
-def insert_task(task: TaskInstance):
+def insert_task(task: TaskInstance)->int:
+    # todo: this cursor is not thread safe?
+    cur = con.cursor()
     parameters = task.serialize_parameters()
     cur.execute("INSERT INTO tb_tasks (pipeline_instance_id, name, parameters, status) VALUES (?, ?, ?, ?)", (
         task.pipeline_id, task.name, parameters, task.status))
+    id = cur.lastrowid
     con.commit()
+    return id
 
-def complete_task(task_id: int):
+def task_save(pipeline_id, name, *args, **kwargs):
+    task = TaskInstance(pipeline_id, None, name, *args, **kwargs)
+    insert_task(task)
+
+def complete_task(task_id: int)->None:
+    cur = con.cursor()
     cur.execute("UPDATE tb_tasks SET status=1 WHERE id=?", (task_id,))
+    return 
 
-def query_tasks(pipeline_id):
-    cur.execute("SELECT * FROM tb_tasks WHERE pipeline_id=?", (pipeline_id,))
-    rows = cur.fetchall()
-    for row in rows:
-        task = TaskInstance(row[1], row[0], row[2])
-        task.deserialize_parameters(row[3])
-        print(task)
+def insert_pipeline(pipeline: PipelineInstance)->int:
+    cur = con.cursor()
+    cur.execute("INSERT INTO tb_pipelines (name, version, status) VALUES (?, ?, ?)", (pipeline.name, pipeline.version, pipeline.status))
+    id = cur.lastrowid
+    con.commit()
+    return id
 
-def query_history(pipeline_id: int):
+def query_history(pipeline_id: int)->InstanceHistory:
+    cur = con.cursor()
     cur.execute("SELECT * FROM tb_tasks WHERE pipeline_id=?", (pipeline_id,))
     rows = cur.fetchall()
     tasks = []
@@ -88,8 +99,6 @@ def query_history(pipeline_id: int):
         task = TaskInstance(row[1], row[0], row[2])
         task.deserialize_parameters(row[3])
         tasks.append(task)
-    return InstanceHistory(tasks, Status.INIT)
-
-def task_save(pipeline_id, name, *args, **kwargs):
-    task = TaskInstance(pipeline_id, None, name, *args, **kwargs)
-    insert_task(task)
+    instance = cur.execute("SELECT id, name, version, status FROM tb_pipelines WHERE id=?", (pipeline_id,)).fetchone()
+    history = InstanceHistory(tasks, instance)
+    return history
