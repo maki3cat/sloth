@@ -7,7 +7,6 @@ import uuid
 
 LLM_urls = ["GPT", "CLAUD", "DEEPSEEK", "GROK"]
 
-
 # todo: should learn how to generate data as real
 @pipeline
 def generate_synthetic_data(batch_id: str=None, count_per_LLM: int=10):
@@ -22,7 +21,6 @@ def generate_synthetic_data(batch_id: str=None, count_per_LLM: int=10):
     # todo: tolerate stagger, and other failures
     accumulate_data()
 
-
 @task
 def call_LLM_and_save(batch_id: str, task_count: int, url: str)->str:
     print(f"checking idempotent for bactch_id-task_count: {batch_id}-{task_count}")
@@ -32,7 +30,6 @@ def call_LLM_and_save(batch_id: str, task_count: int, url: str)->str:
 @task
 def accumulate_data():
     print("Accumulating the data for next step")
-
 
 if __name__ == "__main__":
     print("Hello, World!")

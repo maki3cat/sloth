@@ -2,6 +2,11 @@ import json
 import sqlite3
 from enum import Enum
 
+class Status(Enum):
+    INIT = 0
+    COMPLETED = 1
+    FAILED = 2
+
 class TaskInstance:
     """
     todo: currently we don't have language-neutral serialization format
@@ -28,11 +33,6 @@ class TaskInstance:
         data = json.loads(json_data)
         self.args = data['args']
         self.kwargs = data['kwargs']
-
-class Status(Enum):
-    INIT = 0
-    COMPLETED = 1
-    FAILED = 2
     
 class PipelineInstance:
     def __init__(self, name, tasks, status=Status.INIT, version=0, id=None):
