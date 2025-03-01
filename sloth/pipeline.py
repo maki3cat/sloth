@@ -1,5 +1,5 @@
 # todo: why this is called history
-from sloth.history import query_history, Status, complete_task, insert_task, InstanceHistory
+from sloth.history import query_history, Status, complete_task, insert_task, PipelineContext
 
 pipeline_registry = {}
 
@@ -11,23 +11,28 @@ def pipeline(func):
         if pipeline_instance_id == None:
             pipeline_instance_id = uuid.uuid4().hex
         # todo: should have a better way to generate pipeline_id
-        data = query_history(pipeline_instance_id)
         print("Pipeline started...")
-
+        pipeline_context = query_history(pipeline_instance_id)
         # todo: how to set this history into users function?
-        func(instance_history = data, *args, **wargs)
+        func(*args, **wargs)
         print("Pipeline ended...")
     return wrapper
 
+
+# todo: should be store this half-finished task somewhere unblockingly and continue the pipeline
 def task(func):
-    def wrapper(instance_history: InstanceHistory, *args, **wargs):
+    def wrapper(*args, **wargs):
+        instance_history = args[0] or wargs["context"]
+
         cur_task_name = func.__name__
         for task in instance_history.task_map:
             if task.name == cur_task_name:
                 if task.status == Status.COMPLETED:
                     print(f"Task {cur_task_name} already completed, skipping...")
+                    # todo: add task return value into history
                     return
 
+        # todo: send a task request to queue
         print(f"Task {cur_task_name} started...")
         func(*args, **wargs)
         print(f"Task {cur_task_name} completed...")

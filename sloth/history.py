@@ -42,7 +42,7 @@ class PipelineInstance:
         self.status =  status
         self.id = id
 
-class InstanceHistory:
+class PipelineContext:
     def __init__(self, task_instances:list[TaskInstance], instance: PipelineInstance):
         self.pipeline_status = instance.status
         self.pipeline_version = instance.version
@@ -91,7 +91,7 @@ def insert_pipeline(pipeline: PipelineInstance)->int:
     con.commit()
     return id
 
-def query_history(pipeline_instance_id: int)->InstanceHistory:
+def query_history(pipeline_instance_id: int)->PipelineContext:
     cur = con.cursor()
     instance = cur.execute("SELECT id, name, version, status FROM tb_pipelines WHERE id=?", (pipeline_instance_id,)).fetchone()
     if instance is None:
@@ -103,5 +103,5 @@ def query_history(pipeline_instance_id: int)->InstanceHistory:
         task = TaskInstance(row[1], row[0], row[2])
         task.deserialize_parameters(row[3])
         tasks.append(task)
-    history = InstanceHistory(tasks, instance)
+    history = PipelineContext(tasks, instance)
     return history

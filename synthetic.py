@@ -1,15 +1,17 @@
 """
 this is a pipeline to generate synthetic data
 """
-from sloth.pipeline import pipeline, task
 import uuid
-
+from sloth.pipeline import pipeline, task
+from sloth.history import PipelineContext
 
 LLM_urls = ["GPT", "CLAUD", "DEEPSEEK", "GROK"]
 
 # todo: should learn how to generate data as real
+# todo: how to avoid asking uses to add this pipeline_context by hand?
+# todo: invasion into signature
 @pipeline
-def generate_synthetic_data(batch_id: str=None, count_per_LLM: int=10):
+def generate_synthetic_data(context: PipelineContext, batch_id: str=None, count_per_LLM: int=10):
     if batch_id is None:
         batch_id = uuid.uuid4().hex
     # prompt = "some fixed url for symptom BPD"
@@ -22,7 +24,7 @@ def generate_synthetic_data(batch_id: str=None, count_per_LLM: int=10):
     accumulate_data()
 
 @task
-def call_LLM_and_save(batch_id: str, task_count: int, url: str)->str:
+def call_LLM_and_save(context: PipelineContext, batch_id: str, task_count: int, url: str)->str:
     print(f"checking idempotent for bactch_id-task_count: {batch_id}-{task_count}")
     print(f"Calling LLM with url: {url}")
     print(f"Saving the data")
