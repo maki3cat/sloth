@@ -2,7 +2,7 @@
 this is a pipeline to generate synthetic data
 """
 import uuid
-from sloth.pipeline import pipeline, task
+from sloth.pipeline import pipeline, task, call_step
 from sloth.history import PipelineContext
 
 LLM_urls = ["GPT", "CLAUD", "DEEPSEEK", "GROK"]
@@ -18,7 +18,7 @@ def generate_synthetic_data(context: PipelineContext, batch_id: str=None, count_
     for url in LLM_urls:
         for i in range(count_per_LLM):
         # todo: should add worker of activity so that this will not blocking start task of 
-            call_LLM_and_save(batch_id, i, url)
+            call_step(call_LLM_and_save, batch_id, i, url)
     # todo: wait for all the call to return
     # todo: tolerate stagger, and other failures
     accumulate_data()

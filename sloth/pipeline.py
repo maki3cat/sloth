@@ -18,6 +18,10 @@ def pipeline(func):
         print("Pipeline ended...")
     return wrapper
 
+# todo: should be wrapped by a coroutine 
+def call_step(func, *args, **wargs):
+    pass
+
 
 # todo: should be store this half-finished task somewhere unblockingly and continue the pipeline
 def task(func):
